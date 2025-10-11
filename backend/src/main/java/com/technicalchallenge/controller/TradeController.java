@@ -87,6 +87,9 @@ public class TradeController {
             @Valid @RequestBody TradeDTO tradeDTO) {
         logger.info("Creating new trade: {}", tradeDTO);
         try {
+            if ((tradeDTO.getBookName() == null) || (tradeDTO.getCounterpartyName() == null)) {
+                return ResponseEntity.badRequest().body("Book and Counterparty are required");
+            }
             Trade trade = tradeMapper.toEntity(tradeDTO);
             tradeService.populateReferenceDataByName(trade, tradeDTO);
             Trade savedTrade = tradeService.saveTrade(trade, tradeDTO);
