@@ -91,7 +91,7 @@ public class TradeController {
             tradeService.populateReferenceDataByName(trade, tradeDTO);
             Trade savedTrade = tradeService.saveTrade(trade, tradeDTO);
             TradeDTO responseDTO = tradeMapper.toDto(savedTrade);
-            return ResponseEntity.status(HttpStatus.CREATED).body(responseDTO);
+            return ResponseEntity.ok(responseDTO);
         } catch (Exception e) {
             logger.error("Error creating trade: {}", e.getMessage(), e);
             return ResponseEntity.badRequest().body("Error creating trade: " + e.getMessage());
