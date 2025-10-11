@@ -90,6 +90,9 @@ public class TradeController {
             if ((tradeDTO.getBookName() == null) || (tradeDTO.getCounterpartyName() == null)) {
                 return ResponseEntity.badRequest().body("Book and Counterparty are required");
             }
+            // if (tradeDTO.getTradeStartDate() == null) {
+            //     return ResponseEntity.badRequest().body("Trade date is required");
+            // }
             Trade trade = tradeMapper.toEntity(tradeDTO);
             tradeService.populateReferenceDataByName(trade, tradeDTO);
             Trade savedTrade = tradeService.saveTrade(trade, tradeDTO);
@@ -144,7 +147,7 @@ public class TradeController {
         logger.info("Deleting trade with id: {}", id);
         try {
             tradeService.deleteTrade(id);
-            return ResponseEntity.ok().body("Trade cancelled successfully");
+            return ResponseEntity.noContent().build();
         } catch (Exception e) {
             logger.error("Error deleting trade: {}", e.getMessage(), e);
             return ResponseEntity.badRequest().body("Error deleting trade: " + e.getMessage());
