@@ -30,10 +30,11 @@ public class OpenApiConfig {
                         .license(new License()
                                 .name("MIT License")
                                 .url("https://opensource.org/licenses/MIT")))
+                // Codespaces URL added
                 .servers(List.of(
                         new Server()
-                                .url("http://localhost:8080")
-                                .description("Development server"),
+                                .url("https://verbose-happiness-jj45jq9jpqgq2p7g-8080.app.github.dev")
+                                .description("Codespaces server"),
                         new Server()
                                 .url("https://api.tradecapture.com")
                                 .description("Production server")))
