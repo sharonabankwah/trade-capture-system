@@ -87,16 +87,11 @@ public class TradeController {
             @Valid @RequestBody TradeDTO tradeDTO) {
         logger.info("Creating new trade: {}", tradeDTO);
         try {
-            if ((tradeDTO.getBookName() == null) || (tradeDTO.getCounterpartyName() == null)) {
-                return ResponseEntity.badRequest().body("Book and Counterparty are required");
-            }
-            // if (tradeDTO.getTradeStartDate() == null) {
-            //     return ResponseEntity.badRequest().body("Trade date is required");
-            // }
             Trade trade = tradeMapper.toEntity(tradeDTO);
             tradeService.populateReferenceDataByName(trade, tradeDTO);
             Trade savedTrade = tradeService.saveTrade(trade, tradeDTO);
             TradeDTO responseDTO = tradeMapper.toDto(savedTrade);
+            // Added return status 200 OK for successful creation
             return ResponseEntity.ok(responseDTO);
         } catch (Exception e) {
             logger.error("Error creating trade: {}", e.getMessage(), e);
@@ -147,6 +142,7 @@ public class TradeController {
         logger.info("Deleting trade with id: {}", id);
         try {
             tradeService.deleteTrade(id);
+            // Added return status 204 No Content for successful deletion
             return ResponseEntity.noContent().build();
         } catch (Exception e) {
             logger.error("Error deleting trade: {}", e.getMessage(), e);
