@@ -91,7 +91,8 @@ public class TradeController {
             tradeService.populateReferenceDataByName(trade, tradeDTO);
             Trade savedTrade = tradeService.saveTrade(trade, tradeDTO);
             TradeDTO responseDTO = tradeMapper.toDto(savedTrade);
-            return ResponseEntity.status(HttpStatus.CREATED).body(responseDTO);
+            // Added return status 200 OK for successful creation
+            return ResponseEntity.ok(responseDTO);
         } catch (Exception e) {
             logger.error("Error creating trade: {}", e.getMessage(), e);
             return ResponseEntity.badRequest().body("Error creating trade: " + e.getMessage());
@@ -116,10 +117,14 @@ public class TradeController {
             @Valid @RequestBody TradeDTO tradeDTO) {
         logger.info("Updating trade with id: {}", id);
         try {
+            if (!tradeDTO.getTradeId().equals(id)) {
+                return ResponseEntity.badRequest().body("Trade ID in path must match Trade ID in request body");
+            } else {
             tradeDTO.setTradeId(id); // Ensure the ID matches
             Trade amendedTrade = tradeService.amendTrade(id, tradeDTO);
             TradeDTO responseDTO = tradeMapper.toDto(amendedTrade);
             return ResponseEntity.ok(responseDTO);
+            }
         } catch (Exception e) {
             logger.error("Error updating trade: {}", e.getMessage(), e);
             return ResponseEntity.badRequest().body("Error updating trade: " + e.getMessage());
@@ -141,7 +146,8 @@ public class TradeController {
         logger.info("Deleting trade with id: {}", id);
         try {
             tradeService.deleteTrade(id);
-            return ResponseEntity.ok().body("Trade cancelled successfully");
+            // Added return status 204 No Content for successful deletion
+            return ResponseEntity.noContent().build();
         } catch (Exception e) {
             logger.error("Error deleting trade: {}", e.getMessage(), e);
             return ResponseEntity.badRequest().body("Error deleting trade: " + e.getMessage());
