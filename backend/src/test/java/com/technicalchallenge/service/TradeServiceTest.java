@@ -2,12 +2,18 @@ package com.technicalchallenge.service;
 
 import com.technicalchallenge.dto.TradeDTO;
 import com.technicalchallenge.dto.TradeLegDTO;
+import com.technicalchallenge.model.Book;
+import com.technicalchallenge.model.Counterparty;
 import com.technicalchallenge.model.Trade;
 import com.technicalchallenge.model.TradeLeg;
+import com.technicalchallenge.model.TradeStatus;
+import com.technicalchallenge.repository.BookRepository;
 import com.technicalchallenge.repository.CashflowRepository;
+import com.technicalchallenge.repository.CounterpartyRepository;
 import com.technicalchallenge.repository.TradeLegRepository;
 import com.technicalchallenge.repository.TradeRepository;
 import com.technicalchallenge.repository.TradeStatusRepository;
+import com.technicalchallenge.repository.TradeTypeRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -37,6 +43,15 @@ class TradeServiceTest {
 
     @Mock
     private TradeStatusRepository tradeStatusRepository;
+
+    @Mock
+    private BookRepository bookRepository;
+
+    @Mock
+    private CounterpartyRepository counterpartyRepository;
+
+    @Mock
+    private TradeTypeService tradeTypeService;
 
     @Mock
     private AdditionalInfoService additionalInfoService;
@@ -74,6 +89,24 @@ class TradeServiceTest {
     @Test
     void testCreateTrade_Success() {
         // Given
+        tradeDTO.setBookName("Book-1");
+        tradeDTO.setCounterpartyName("Counterparty-1");
+        tradeDTO.setTradeStatus("NEW");
+        
+        Book mockBook = new Book();
+        Counterparty mockCounterparty = new Counterparty();
+        TradeStatus mockStatus = new TradeStatus();
+        TradeLeg mockLeg = new TradeLeg();
+        
+        mockBook.setId(1L);
+        mockCounterparty.setId(1L);
+        mockStatus.setTradeStatus("NEW");
+        mockLeg.setLegId(1L);
+
+        when(bookRepository.findByBookName("Book-1")).thenReturn(Optional.of(mockBook));
+        when(counterpartyRepository.findByName("Counterparty-1")).thenReturn(Optional.of(mockCounterparty));
+        when(tradeStatusRepository.findByTradeStatus("NEW")).thenReturn(Optional.of(mockStatus));
+        when(tradeLegRepository.save(any(TradeLeg.class))).thenReturn(mockLeg);
         when(tradeRepository.save(any(Trade.class))).thenReturn(trade);
 
         // When
