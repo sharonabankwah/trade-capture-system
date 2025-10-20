@@ -75,15 +75,19 @@ class TradeServiceTest {
         leg1.setNotional(BigDecimal.valueOf(1000000));
         leg1.setRate(0.05);
 
+
         TradeLegDTO leg2 = new TradeLegDTO();
         leg2.setNotional(BigDecimal.valueOf(1000000));
         leg2.setRate(0.0);
+
 
         tradeDTO.setTradeLegs(Arrays.asList(leg1, leg2));
 
         trade = new Trade();
         trade.setId(1L);
         trade.setTradeId(100001L);
+        // Set version to 1 
+        trade.setVersion(1);
     }
 
     @Test
@@ -93,16 +97,19 @@ class TradeServiceTest {
         tradeDTO.setCounterpartyName("Counterparty-1");
         tradeDTO.setTradeStatus("NEW");
         
+        // Mocked dependencies
         Book mockBook = new Book();
         Counterparty mockCounterparty = new Counterparty();
         TradeStatus mockStatus = new TradeStatus();
         TradeLeg mockLeg = new TradeLeg();
         
+        // Set IDs for mocks
         mockBook.setId(1L);
         mockCounterparty.setId(1L);
         mockStatus.setTradeStatus("NEW");
         mockLeg.setLegId(1L);
 
+        // Mocked repository methods
         when(bookRepository.findByBookName("Book-1")).thenReturn(Optional.of(mockBook));
         when(counterpartyRepository.findByName("Counterparty-1")).thenReturn(Optional.of(mockCounterparty));
         when(tradeStatusRepository.findByTradeStatus("NEW")).thenReturn(Optional.of(mockStatus));
@@ -120,7 +127,7 @@ class TradeServiceTest {
 
     @Test
     void testCreateTrade_InvalidDates_ShouldFail() {
-        // Given - This test is intentionally failing for candidates to fix
+        // Given
         tradeDTO.setTradeStartDate(LocalDate.of(2025, 1, 10)); // Before trade date
 
         // When & Then
@@ -128,8 +135,8 @@ class TradeServiceTest {
             tradeService.createTrade(tradeDTO);
         });
 
-        // This assertion is intentionally wrong - candidates need to fix it
-        assertEquals("Wrong error message", exception.getMessage());
+        // Fixed the expected message
+        assertEquals("Start date cannot be before trade date", exception.getMessage());
     }
 
     @Test
@@ -173,9 +180,13 @@ class TradeServiceTest {
     @Test
     void testAmendTrade_Success() {
         // Given
+        TradeLeg mockLeg = new TradeLeg();
+        mockLeg.setLegId(1L);
+
         when(tradeRepository.findByTradeIdAndActiveTrue(100001L)).thenReturn(Optional.of(trade));
         when(tradeStatusRepository.findByTradeStatus("AMENDED")).thenReturn(Optional.of(new com.technicalchallenge.model.TradeStatus()));
         when(tradeRepository.save(any(Trade.class))).thenReturn(trade);
+        when(tradeLegRepository.save(any(TradeLeg.class))).thenReturn(mockLeg);
 
         // When
         Trade result = tradeService.amendTrade(100001L, tradeDTO);
