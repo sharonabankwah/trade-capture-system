@@ -3,13 +3,17 @@ package com.technicalchallenge.service;
 import com.technicalchallenge.dto.TradeDTO;
 import com.technicalchallenge.dto.TradeLegDTO;
 import com.technicalchallenge.model.Book;
+import com.technicalchallenge.model.Cashflow;
 import com.technicalchallenge.model.Counterparty;
+import com.technicalchallenge.model.LegType;
+import com.technicalchallenge.model.Schedule;
 import com.technicalchallenge.model.Trade;
 import com.technicalchallenge.model.TradeLeg;
 import com.technicalchallenge.model.TradeStatus;
 import com.technicalchallenge.repository.BookRepository;
 import com.technicalchallenge.repository.CashflowRepository;
 import com.technicalchallenge.repository.CounterpartyRepository;
+import com.technicalchallenge.repository.ScheduleRepository;
 import com.technicalchallenge.repository.TradeLegRepository;
 import com.technicalchallenge.repository.TradeRepository;
 import com.technicalchallenge.repository.TradeStatusRepository;
@@ -20,13 +24,17 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.cglib.core.Local;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -52,6 +60,9 @@ class TradeServiceTest {
 
     @Mock
     private TradeTypeService tradeTypeService;
+
+    @Mock
+    private ScheduleRepository scheduleRepository;
 
     @Mock
     private AdditionalInfoService additionalInfoService;
@@ -88,7 +99,10 @@ class TradeServiceTest {
         trade.setTradeId(100001L);
         // Set version to 1 
         trade.setVersion(1);
+
     }
+
+
 
     @Test
     void testCreateTrade_Success() {
@@ -96,13 +110,13 @@ class TradeServiceTest {
         tradeDTO.setBookName("Book-1");
         tradeDTO.setCounterpartyName("Counterparty-1");
         tradeDTO.setTradeStatus("NEW");
-        
+
         // Mocked dependencies
         Book mockBook = new Book();
         Counterparty mockCounterparty = new Counterparty();
         TradeStatus mockStatus = new TradeStatus();
         TradeLeg mockLeg = new TradeLeg();
-        
+
         // Set IDs for mocks
         mockBook.setId(1L);
         mockCounterparty.setId(1L);
@@ -180,12 +194,15 @@ class TradeServiceTest {
     @Test
     void testAmendTrade_Success() {
         // Given
+        // Added mock TradeLeg
         TradeLeg mockLeg = new TradeLeg();
+        // Set legId
         mockLeg.setLegId(1L);
 
         when(tradeRepository.findByTradeIdAndActiveTrue(100001L)).thenReturn(Optional.of(trade));
         when(tradeStatusRepository.findByTradeStatus("AMENDED")).thenReturn(Optional.of(new com.technicalchallenge.model.TradeStatus()));
         when(tradeRepository.save(any(Trade.class))).thenReturn(trade);
+        // Mocked repository to return mockLeg 
         when(tradeLegRepository.save(any(TradeLeg.class))).thenReturn(mockLeg);
 
         // When
@@ -209,19 +226,76 @@ class TradeServiceTest {
         assertTrue(exception.getMessage().contains("Trade not found"));
     }
 
-    // This test has a deliberate bug for candidates to find and fix
-    @Test
-    void testCashflowGeneration_MonthlySchedule() {
-        // This test method is incomplete and has logical errors
-        // Candidates need to implement proper cashflow testing
+      // This test has a deliberate bug for candidates to find and fix
+      @Test
+      void testCashflowGeneration_MonthlySchedule() {
+  
+          // Given
 
-        // Given - setup is incomplete
-        TradeLeg leg = new TradeLeg();
-        leg.setNotional(BigDecimal.valueOf(1000000));
+          // Mocked dependencies
 
-        // When - method call is missing
+          Book mockBook = new Book();
+          Counterparty mockCounterparty = new Counterparty();
+          TradeStatus mockStatus = new TradeStatus();
+          Cashflow mockCashflow = new Cashflow();
 
-        // Then - assertions are wrong/missing
-        assertEquals(1, 12); // This will always fail - candidates need to fix
-    }
-}
+          mockBook.setBookName("Book-1");
+          mockCounterparty.setName("Counterparty-1");
+          mockStatus.setTradeStatus("NEW");
+
+          // TradeDTO setup 
+
+          tradeDTO.setBookName("Book-1");
+          tradeDTO.setCounterpartyName("Counterparty-1");
+          tradeDTO.setTradeStatus("NEW");
+          tradeDTO.setTradeStartDate(LocalDate.of(2025, 1, 15));
+          tradeDTO.setTradeMaturityDate(LocalDate.of(2026, 1, 15));
+
+          // TradeLegDTO setup
+
+          TradeLegDTO leg1 = new TradeLegDTO();
+          leg1.setNotional(BigDecimal.valueOf(1000000));
+          leg1.setRate(0.05);
+
+          TradeLegDTO leg2 = new TradeLegDTO();
+          leg2.setNotional(BigDecimal.valueOf(1000000));
+          leg2.setRate(0.05);
+
+          // Added legs to tradeDTO
+
+          tradeDTO.setTradeLegs(Arrays.asList(leg1, leg2));
+
+          TradeLeg savedLeg1 = new TradeLeg();
+          savedLeg1.setLegId(1L);
+          savedLeg1.setNotional(BigDecimal.valueOf(1000000));
+          savedLeg1.setRate(0.05);
+
+          TradeLeg savedLeg2 = new TradeLeg();
+          savedLeg2.setLegId(1L);
+          savedLeg2.setNotional(BigDecimal.valueOf(1000000));
+          savedLeg2.setRate(0.05);
+
+          Trade tradeEntity = new Trade();
+          tradeEntity.setTradeId(10001L);
+          tradeEntity.setVersion(1);
+          tradeEntity.setActive(true);
+          tradeEntity.setTradeLegs(Arrays.asList(savedLeg1, savedLeg2));
+
+          // Mocked repositories
+
+          when(bookRepository.findByBookName("Book-1")).thenReturn(Optional.of(mockBook));
+          when(counterpartyRepository.findByName("Counterparty-1")).thenReturn(Optional.of(mockCounterparty));
+          when(tradeStatusRepository.findByTradeStatus("NEW")).thenReturn(Optional.of(mockStatus));
+          when(tradeLegRepository.save(any(TradeLeg.class))).thenReturn(savedLeg1);
+          when(tradeRepository.save(any(Trade.class))).thenReturn(tradeEntity);
+          when(cashflowRepository.save(any(Cashflow.class))).thenReturn(mockCashflow);
+  
+          // When
+          Trade result = tradeService.createTrade(tradeDTO);
+  
+          // Then
+          assertNotNull(result);
+          assertEquals(2, result.getTradeLegs().size());
+          verify(cashflowRepository, atLeastOnce()).save(any(Cashflow.class)); 
+      }
+  }
