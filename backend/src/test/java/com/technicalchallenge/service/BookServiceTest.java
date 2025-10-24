@@ -8,6 +8,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import com.technicalchallenge.mapper.BookMapper;
+
 
 import java.util.Optional;
 
@@ -21,11 +23,17 @@ public class BookServiceTest {
     @InjectMocks
     private BookService bookService;
 
+    @Mock
+    private BookMapper bookMapper;
+
     @Test
     void testFindBookById() {
         Book book = new Book();
         book.setId(1L);
+        BookDTO bookDto = new BookDTO();
+        bookDto.setId(1L);
         when(bookRepository.findById(1L)).thenReturn(Optional.of(book));
+        when(bookMapper.toDto(book)).thenReturn(bookDto);
         Optional<BookDTO> found = bookService.getBookById(1L);
         assertTrue(found.isPresent());
         assertEquals(1L, found.get().getId());
