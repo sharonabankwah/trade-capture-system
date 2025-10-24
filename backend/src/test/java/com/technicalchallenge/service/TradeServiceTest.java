@@ -261,6 +261,10 @@ class TradeServiceTest {
           leg2.setNotional(BigDecimal.valueOf(1000000));
           leg2.setRate(0.05);
 
+          Schedule schedule = new Schedule();
+          schedule.setSchedule("1M");
+          schedule.setId(123L);
+
           // Added legs to tradeDTO
 
           tradeDTO.setTradeLegs(Arrays.asList(leg1, leg2));
@@ -269,15 +273,16 @@ class TradeServiceTest {
           savedLeg1.setLegId(1L);
           savedLeg1.setNotional(BigDecimal.valueOf(1000000));
           savedLeg1.setRate(0.05);
+          savedLeg1.setCalculationPeriodSchedule(schedule);
 
           TradeLeg savedLeg2 = new TradeLeg();
           savedLeg2.setLegId(1L);
           savedLeg2.setNotional(BigDecimal.valueOf(1000000));
           savedLeg2.setRate(0.05);
+          savedLeg2.setCalculationPeriodSchedule(schedule);
 
           Trade tradeEntity = new Trade();
           tradeEntity.setTradeId(10001L);
-          tradeEntity.setVersion(1);
           tradeEntity.setActive(true);
           tradeEntity.setTradeLegs(Arrays.asList(savedLeg1, savedLeg2));
 
