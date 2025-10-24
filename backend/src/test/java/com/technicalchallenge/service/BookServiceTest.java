@@ -32,8 +32,12 @@ public class BookServiceTest {
         book.setId(1L);
         BookDTO bookDto = new BookDTO();
         bookDto.setId(1L);
+
         when(bookRepository.findById(1L)).thenReturn(Optional.of(book));
+
+        // Mocked BookMapper to return bookDTO 
         when(bookMapper.toDto(book)).thenReturn(bookDto);
+
         Optional<BookDTO> found = bookService.getBookById(1L);
         assertTrue(found.isPresent());
         assertEquals(1L, found.get().getId());
@@ -45,7 +49,13 @@ public class BookServiceTest {
         book.setId(2L);
         BookDTO bookDTO = new BookDTO();
         bookDTO.setId(2L);
-        when(bookRepository.save(any(Book.class))).thenReturn(book);
+        
+        when(bookRepository.save(any(Book.class))).thenReturn(book);   
+        
+        // Mocked BookMapper to convert bookDTO to book then return it 
+        when(bookMapper.toEntity(bookDTO)).thenReturn(book);
+        // Mocked BookMapper to convert book to bookDTO then return it
+        when(bookMapper.toDto(book)).thenReturn(bookDTO);
 
         BookDTO saved = bookService.saveBook(bookDTO);
         assertNotNull(saved);
