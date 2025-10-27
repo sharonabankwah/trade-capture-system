@@ -4,6 +4,15 @@ import com.technicalchallenge.dto.TradeDTO;
 import com.technicalchallenge.dto.TradeLegDTO;
 import com.technicalchallenge.model.*;
 import com.technicalchallenge.repository.*;
+
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.TypedQuery;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -56,6 +65,8 @@ public class TradeService {
     private PayRecRepository payRecRepository;
     @Autowired
     private AdditionalInfoService additionalInfoService;
+    @PersistenceContext 
+    private EntityManager entityManager;
 
     public List<Trade> getAllTrades() {
         logger.info("Retrieving all trades");
@@ -65,6 +76,69 @@ public class TradeService {
     public Optional<Trade> getTradeById(Long tradeId) {
         logger.debug("Retrieving trade by id: {}", tradeId);
         return tradeRepository.findByTradeIdAndActiveTrue(tradeId);
+    }
+
+    public List<Trade> getTradeByMultiCriteriaSearch(
+    /**
+    * Searches for trades using multiple optional filters such as counterparty, book, trader, status, 
+    * and trade dates.
+    * @param counterpartyName counterparty to filter by
+    * @param bookName book name to filter by
+    * @param loginId trader's login ID to filter by
+    * @param tradeStatus trade status to filter by
+    * @param tradeStartDate filter trades on or after this date
+    * @param tradeMaturityDate filter trades maturing on or before this date
+    * @return list of matching trades
+    */
+        String counterpartyName,
+        String bookName, 
+        Long traderUserId, 
+        String tradeStatus,
+        LocalDate tradeStartDate,
+        LocalDate tradeMaturityDate) {
+
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder(); 
+
+        CriteriaQuery<Trade> cq = cb.createQuery(Trade.class);
+
+        Root<Trade> tradeRoot = cq.from(Trade.class);
+
+        List<Predicate> predicates = new ArrayList<>();
+
+        if (counterpartyName != null) {
+            predicates.add(cb.equal(tradeRoot.get("counterparty").get("name"),
+                counterpartyName
+            ));
+        }
+        if (bookName != null) {
+            predicates.add(cb.equal(tradeRoot.get("book").get("bookName"), 
+                bookName
+            ));
+        }
+        if (traderUserId != null) {
+            predicates.add(cb.equal(tradeRoot.get("traderUser").get("id"), 
+                traderUserId
+            ));
+        }
+        if (tradeStatus != null) {
+            predicates.add(cb.equal(tradeRoot.get("tradeStatus").get("tradeStatus"),
+                 tradeStatus
+            ));
+        }
+        if ((tradeStartDate != null) && (tradeMaturityDate != null)) {
+            predicates.add(cb.between(tradeRoot.get("tradeStartDate"),
+            tradeStartDate, tradeMaturityDate
+            ));
+            predicates.add(cb.between(tradeRoot.get("tradeMaturityDate"), 
+            tradeStartDate, tradeMaturityDate
+            ));
+        }
+        
+        cq.where(cb.and(predicates.toArray(new Predicate[0])));
+        
+        TypedQuery<Trade> query = entityManager.createQuery(cq);
+
+        return query.getResultList();
     }
 
     @Transactional
