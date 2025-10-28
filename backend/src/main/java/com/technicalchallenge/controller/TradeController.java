@@ -5,6 +5,7 @@ import com.technicalchallenge.mapper.TradeMapper;
 import com.technicalchallenge.model.Trade;
 import com.technicalchallenge.service.TradeService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -18,6 +19,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+
+import java.time.LocalDate;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -70,6 +73,39 @@ public class TradeController {
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
+
+    @GetMapping("/search")
+    @Operation(summary = "Get trade by counterparty, book, trader, status or date ranges",
+                description = "Retrieves a list of trades using a dynamic multi-criteria search")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Successfully retrieved list of trades",
+                    content = @Content(mediaType = "application/json",
+                                schema = @Schema(implementation = TradeDTO.class))),
+        @ApiResponse(responseCode = "404", description = "Invalid query parameters"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    public List<TradeDTO> getTradesByCriteria( 
+            @RequestParam(required = false) String counterpartyName,
+            @RequestParam(required = false) String bookName,
+            @RequestParam(required = false) Long traderUserId,
+            @RequestParam(required = false) String tradeStatus,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate tradeDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate tradeStartDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate tradeMaturityDate
+    ) {
+        List<Trade> filteredTrades = tradeService.getTradeByMultiCriteriaSearch(counterpartyName, bookName, traderUserId,
+         tradeStatus, tradeDate, tradeStartDate, tradeMaturityDate);
+
+        List<TradeDTO> filteredTradesDTO;
+
+        for (Trade filteredTrade : filteredTrades) {
+            filteredTradesDTO = tradeMapper.toDto(filteredTrade);
+         }
+
+        return ResponseEntity.ok(filteredTradesDTO); 
+    }
+
+
 
     @PostMapping
     @Operation(summary = "Create new trade",
