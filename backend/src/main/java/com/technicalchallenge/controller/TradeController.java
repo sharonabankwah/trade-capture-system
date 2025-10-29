@@ -21,6 +21,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -84,7 +85,7 @@ public class TradeController {
         @ApiResponse(responseCode = "404", description = "Invalid query parameters"),
         @ApiResponse(responseCode = "500", description = "Internal server error")
     })
-    public List<TradeDTO> getTradesByCriteria( 
+    public ResponseEntity<List<TradeDTO>> getTradesByCriteria( 
             @RequestParam(required = false) String counterpartyName,
             @RequestParam(required = false) String bookName,
             @RequestParam(required = false) Long traderUserId,
@@ -96,10 +97,10 @@ public class TradeController {
         List<Trade> filteredTrades = tradeService.getTradeByMultiCriteriaSearch(counterpartyName, bookName, traderUserId,
          tradeStatus, tradeDate, tradeStartDate, tradeMaturityDate);
 
-        List<TradeDTO> filteredTradesDTO;
+        List<TradeDTO> filteredTradesDTO = new ArrayList<>();
 
         for (Trade filteredTrade : filteredTrades) {
-            filteredTradesDTO = tradeMapper.toDto(filteredTrade);
+            filteredTradesDTO.add(tradeMapper.toDto(filteredTrade));
          }
 
         return ResponseEntity.ok(filteredTradesDTO); 
