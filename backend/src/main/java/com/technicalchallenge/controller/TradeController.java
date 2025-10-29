@@ -22,6 +22,7 @@ import jakarta.validation.Valid;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -79,31 +80,57 @@ public class TradeController {
     @Operation(summary = "Get trade by counterparty, book, trader, status or date ranges",
                 description = "Retrieves a list of trades using a dynamic multi-criteria search")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Successfully retrieved list of trades",
+        @ApiResponse(responseCode = "200", description = "Successfully retrieved list of trades and empty list if no trades match",
                     content = @Content(mediaType = "application/json",
                                 schema = @Schema(implementation = TradeDTO.class))),
-        @ApiResponse(responseCode = "404", description = "Invalid query parameters"),
+        @ApiResponse(responseCode = "400", description = "Invalid query parameters or date validation failure"),
         @ApiResponse(responseCode = "500", description = "Internal server error")
     })
-    public ResponseEntity<List<TradeDTO>> getTradesByCriteria( 
+    public ResponseEntity<?> getTradesByCriteria( 
             @RequestParam(required = false) String counterpartyName,
             @RequestParam(required = false) String bookName,
             @RequestParam(required = false) Long traderUserId,
             @RequestParam(required = false) String tradeStatus,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate tradeDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate tradeStartDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate tradeMaturityDate
-    ) {
-        List<Trade> filteredTrades = tradeService.getTradeByMultiCriteriaSearch(counterpartyName, bookName, traderUserId,
-         tradeStatus, tradeDate, tradeStartDate, tradeMaturityDate);
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate tradeMaturityDate) {
 
-        List<TradeDTO> filteredTradesDTO = new ArrayList<>();
+        logger.info("Fetching trades by a multi-criteria search");   
 
-        for (Trade filteredTrade : filteredTrades) {
-            filteredTradesDTO.add(tradeMapper.toDto(filteredTrade));
-         }
+        try {
+            // Date input validations
+            if (tradeStartDate == null && tradeMaturityDate == null) {
+                return ResponseEntity.badRequest().body("Please provide at least one date (start or maturity) to filter trades");
+            }
+            if (tradeStartDate != null && tradeMaturityDate != null && tradeStartDate.isAfter(tradeMaturityDate)) {
+                return ResponseEntity.badRequest().body("Start date cannot be after maturity date");
+            }
+            if (tradeStartDate != null && tradeDate != null && tradeStartDate.isBefore(tradeDate)) {
+                return ResponseEntity.badRequest().body("Start date cannot be before trade date");
+            }
+            if (tradeMaturityDate != null && tradeDate != null && tradeMaturityDate.isBefore(tradeDate)) {
+                return ResponseEntity.badRequest().body("Maturity date cannot be before trade date");
+            }
 
-        return ResponseEntity.ok(filteredTradesDTO); 
+            List<Trade> filteredTrades = tradeService.getTradeByMultiCriteriaSearch(counterpartyName, bookName, traderUserId,
+                tradeStatus, tradeDate, tradeStartDate, tradeMaturityDate);
+
+            if (filteredTrades.isEmpty()) {
+                return ResponseEntity.ok(Collections.emptyList()); // Returns an empty list, user friendly
+            }
+
+            List<TradeDTO> filteredTradesDTO = new ArrayList<>();
+
+            for (Trade filteredTrade : filteredTrades) {
+                filteredTradesDTO.add(tradeMapper.toDto(filteredTrade));
+            }
+
+            return ResponseEntity.ok(filteredTradesDTO); 
+
+        } catch (Exception e) {
+            logger.error("Error fetching trades using multi-criteria search", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Unexpected error occurred while fetching trades");
+        }
     }
 
 
