@@ -94,6 +94,7 @@ public class TradeService {
         String bookName, 
         Long traderUserId, 
         String tradeStatus,
+        LocalDate tradeDate,
         LocalDate tradeStartDate,
         LocalDate tradeMaturityDate) {
 
@@ -126,11 +127,18 @@ public class TradeService {
             ));
         }
         if ((tradeStartDate != null) && (tradeMaturityDate != null)) {
-            predicates.add(cb.between(tradeRoot.get("tradeStartDate"),
+            predicates.add(cb.between(tradeRoot.get("tradeDate"),
             tradeStartDate, tradeMaturityDate
             ));
-            predicates.add(cb.between(tradeRoot.get("tradeMaturityDate"), 
-            tradeStartDate, tradeMaturityDate
+        }
+        else if (tradeStartDate != null) {
+            predicates.add(cb.greaterThanOrEqualTo(tradeRoot.get("tradeStartDate"), 
+                tradeStartDate
+            ));
+        }
+        else if (tradeMaturityDate != null) {
+            predicates.add(cb.lessThanOrEqualTo(tradeRoot.get("tradeMaturityDate"),
+                tradeMaturityDate
             ));
         }
         
