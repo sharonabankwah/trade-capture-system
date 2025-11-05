@@ -4,6 +4,7 @@ import com.technicalchallenge.dto.TradeDTO;
 import com.technicalchallenge.dto.TradeLegDTO;
 import com.technicalchallenge.model.*;
 import com.technicalchallenge.repository.*;
+import com.technicalchallenge.specification.TradeSpecificationBuilder;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -18,6 +19,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.slf4j.Logger;
@@ -71,6 +73,8 @@ public class TradeService {
     private AdditionalInfoService additionalInfoService;
     @PersistenceContext 
     private EntityManager entityManager;
+    @Autowired
+    private TradeSpecificationBuilder tradeSpecificationBuilder;
 
     public List<Trade> getAllTrades() {
         logger.info("Retrieving all trades");
@@ -153,17 +157,32 @@ public class TradeService {
         return query.getResultList();
     }
 
-    public Page<Trade> findTradeWithPagination(int pageNumber, int pageSize, String sortBy, String sortDir) {
+    public Page<Trade> getTradesWithFiltersAndPagination(
+        String counterpartyName,
+        String bookName, 
+        Long traderUserId, 
+        String tradeStatus,
+        LocalDate tradeDate,
+        LocalDate tradeStartDate,
+        LocalDate tradeMaturityDate,
+        int pageNumber, 
+        int pageSize, 
+        String sortBy, 
+        String sortDir) {
 
-        if (sortBy == null || sortBy.isBlank()) {
-            sortBy = "tradeDate"; // Set tradeDate as default field
-        } 
+        Sort sort = sortDir.equalsIgnoreCase("desc")
+        ? Sort.by(sortBy).descending()
+        : Sort.by(sortBy).ascending();
 
-        Sort sort;
+        Pageable pageable = PageRequest.of(pageNumber, pageSize, sort);
 
-        Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by(sort));
+        Specification<Trade> spec = tradeSpecificationBuilder.buildTradeSpecification(
+            counterpartyName, bookName, traderUserId, tradeStatus,
+            tradeDate, tradeStartDate, tradeMaturityDate
+        );
 
-        return tradeRepository.findAll(pageable);
+        return tradeRepository.findAll(spec, pageable);
+
     }
 
     @Transactional
