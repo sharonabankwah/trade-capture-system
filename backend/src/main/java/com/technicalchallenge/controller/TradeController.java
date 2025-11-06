@@ -152,6 +152,41 @@ public class TradeController {
         }
     }
 
+    @GetMapping("/rsql")
+    public ResponseEntity<?> getTradesByRsql(
+            @RequestParam String query,
+            @RequestParam(defaultValue = "0") int pageNumber,
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(defaultValue = "tradeDate") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir) {
+
+        logger.info("Executing RSQL query: {}", query);
+
+        try {
+            // Fetches RSQL querying from the service
+            Page<Trade> trades = tradeService.getTradesByRsql(query, pageNumber, pageSize, sortBy, sortDir);
+
+            // Converts entities to DTOs
+            List<TradeDTO> tradeDTOs = trades.getContent().stream().map(tradeMapper::toDto).toList();
+    
+            // Returns structured response including pagination info and trade data
+            return ResponseEntity.ok(Map.of(
+                "totalItems", trades.getTotalElements(),
+                "totalPages", trades.getTotalPages(),
+                "currentPage", trades.getNumber(),
+                "pageSize", trades.getSize(),
+                "isLastPage", trades.isLast(),
+                "content", tradeDTOs
+        ));
+        } catch (IllegalArgumentException e) {
+            logger.error("Invalid RSQL query: {}", e.getMessage());
+            return ResponseEntity.badRequest().body("Invalid RSQL query syntax: " + e.getMessage());
+        } catch (Exception e) {
+            logger.error("Error executing RSQL query", e);
+            return ResponseEntity.internalServerError()
+                .body("Unexpected error occurred while processing RSQL query");
+    }
+}
 
     @PostMapping
     @Operation(summary = "Create new trade",
