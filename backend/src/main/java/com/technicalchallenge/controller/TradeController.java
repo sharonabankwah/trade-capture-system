@@ -5,6 +5,7 @@ import com.technicalchallenge.mapper.TradeMapper;
 import com.technicalchallenge.model.Trade;
 import com.technicalchallenge.service.TradeService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,7 +24,9 @@ import jakarta.validation.Valid;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,10 +80,11 @@ public class TradeController {
     }
 
     @GetMapping("/search")
-    @Operation(summary = "Get trade by counterparty, book, trader, status or date ranges",
-                description = "Retrieves a list of trades using a dynamic multi-criteria search")
+    @Operation(summary = "Get trades by counterparty, book, trader, status or date ranges",
+                description = "Retrieves a paginated and sortable list of trades using dynamic multi-criteria search")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Successfully retrieved list of trades and empty list if no trades match",
+        @ApiResponse(responseCode = "200", 
+                    description = "Successfully retrieved list of trades or empty list if no trades match",
                     content = @Content(mediaType = "application/json",
                                 schema = @Schema(implementation = TradeDTO.class))),
         @ApiResponse(responseCode = "400", description = "Invalid query parameters or date validation failure"),
@@ -93,9 +97,13 @@ public class TradeController {
             @RequestParam(required = false) String tradeStatus,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate tradeDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate tradeStartDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate tradeMaturityDate) {
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate tradeMaturityDate,
+            @RequestParam(defaultValue = "0") int pageNumber,
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(defaultValue = "tradeDate") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir) {
 
-        logger.info("Fetching trades by a multi-criteria search");   
+        logger.info("Fetching trades with dynamic multi-criteria search and pagination");   
 
         try {
             // Date input validations
@@ -112,28 +120,73 @@ public class TradeController {
                 return ResponseEntity.badRequest().body("Maturity date cannot be before trade date");
             }
 
-            List<Trade> filteredTrades = tradeService.getTradeByMultiCriteriaSearch(counterpartyName, bookName, traderUserId,
-                tradeStatus, tradeDate, tradeStartDate, tradeMaturityDate);
+            // Fetches filtered and paginated results
+            Page<Trade> pagedTrades = tradeService.getTradesWithFiltersAndPagination(counterpartyName, bookName, 
+                traderUserId, tradeStatus, tradeDate, tradeStartDate, tradeMaturityDate, pageNumber, 
+                pageSize, sortBy, sortDir
+            );
 
-            if (filteredTrades.isEmpty()) {
-                return ResponseEntity.ok(Collections.emptyList()); // Returns an empty list, user friendly
+            if (pagedTrades.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NO_CONTENT)
+                .body("No trades found for the given criteria");
             }
 
-            List<TradeDTO> filteredTradesDTO = new ArrayList<>();
+            // Converts entities to DTOs
+            List<TradeDTO> pagedTradesDTO = pagedTrades.getContent().stream().map(tradeMapper::toDto).toList();
 
-            for (Trade filteredTrade : filteredTrades) {
-                filteredTradesDTO.add(tradeMapper.toDto(filteredTrade));
-            }
+            // Build response with pagination metadata
+            Map<String, Object> response = new HashMap<>();
+            response.put("content", pagedTradesDTO);
+            response.put("currentPage", pagedTrades.getNumber());
+            response.put("totalItems", pagedTrades.getTotalElements());
+            response.put("totalPages", pagedTrades.getTotalPages());
+            response.put("pageSize", pagedTrades.getSize());
+            response.put("isLastPage", pagedTrades.isLast());
 
-            return ResponseEntity.ok(filteredTradesDTO); 
+            return ResponseEntity.ok(response);
 
         } catch (Exception e) {
             logger.error("Error fetching trades using multi-criteria search", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Unexpected error occurred while fetching trades");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("Unexpected error occurred while fetching trades");
         }
     }
 
+    @GetMapping("/rsql")
+    public ResponseEntity<?> getTradesByRsql(
+            @RequestParam String query,
+            @RequestParam(defaultValue = "0") int pageNumber,
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(defaultValue = "tradeDate") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir) {
 
+        logger.info("Executing RSQL query: {}", query);
+
+        try {
+            // Fetches RSQL querying from the service
+            Page<Trade> trades = tradeService.getTradesByRsql(query, pageNumber, pageSize, sortBy, sortDir);
+
+            // Converts entities to DTOs
+            List<TradeDTO> tradeDTOs = trades.getContent().stream().map(tradeMapper::toDto).toList();
+    
+            // Returns structured response including pagination info and trade data
+            return ResponseEntity.ok(Map.of(
+                "totalItems", trades.getTotalElements(),
+                "totalPages", trades.getTotalPages(),
+                "currentPage", trades.getNumber(),
+                "pageSize", trades.getSize(),
+                "isLastPage", trades.isLast(),
+                "content", tradeDTOs
+        ));
+        } catch (IllegalArgumentException e) {
+            logger.error("Invalid RSQL query: {}", e.getMessage());
+            return ResponseEntity.badRequest().body("Invalid RSQL query syntax: " + e.getMessage());
+        } catch (Exception e) {
+            logger.error("Error executing RSQL query", e);
+            return ResponseEntity.internalServerError()
+                .body("Unexpected error occurred while processing RSQL query");
+    }
+}
 
     @PostMapping
     @Operation(summary = "Create new trade",

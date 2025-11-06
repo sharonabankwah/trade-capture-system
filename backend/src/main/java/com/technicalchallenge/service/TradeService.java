@@ -4,7 +4,9 @@ import com.technicalchallenge.dto.TradeDTO;
 import com.technicalchallenge.dto.TradeLegDTO;
 import com.technicalchallenge.model.*;
 import com.technicalchallenge.repository.*;
+import com.technicalchallenge.specification.TradeSpecificationBuilder;
 
+import io.github.perplexhub.rsql.RSQLJPASupport;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
@@ -14,6 +16,11 @@ import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.slf4j.Logger;
@@ -67,6 +74,8 @@ public class TradeService {
     private AdditionalInfoService additionalInfoService;
     @PersistenceContext 
     private EntityManager entityManager;
+    @Autowired
+    private TradeSpecificationBuilder tradeSpecificationBuilder;
 
     public List<Trade> getAllTrades() {
         logger.info("Retrieving all trades");
@@ -147,6 +156,52 @@ public class TradeService {
         TypedQuery<Trade> query = entityManager.createQuery(cq);
 
         return query.getResultList();
+    }
+
+    public Page<Trade> getTradesWithFiltersAndPagination(
+        String counterpartyName,
+        String bookName, 
+        Long traderUserId, 
+        String tradeStatus,
+        LocalDate tradeDate,
+        LocalDate tradeStartDate,
+        LocalDate tradeMaturityDate,
+        int pageNumber, 
+        int pageSize, 
+        String sortBy, 
+        String sortDir) {
+
+        // Sorts based on ascending or descending
+        Sort sort = sortDir.equalsIgnoreCase("desc")
+        ? Sort.by(sortBy).descending()
+        : Sort.by(sortBy).ascending();
+
+        Pageable pageable = PageRequest.of(pageNumber, pageSize, sort);
+
+        Specification<Trade> spec = tradeSpecificationBuilder.buildTradeSpecification(
+            counterpartyName, bookName, traderUserId, tradeStatus,
+            tradeDate, tradeStartDate, tradeMaturityDate
+        );
+
+        return tradeRepository.findAll(spec, pageable);
+
+    }
+
+    public Page<Trade> getTradesByRsql(String query, int pageNumber, int pageSize, String sortBy, String sortDir) {
+        
+        // Sorts based on ascending or descending
+        Sort sort = sortDir.equalsIgnoreCase("desc") 
+        ? Sort.by(sortBy).descending() 
+        : Sort.by(sortBy).ascending();
+
+         // Builds pagination object with sorting
+        Pageable pageable = PageRequest.of(pageNumber, pageSize, sort);
+
+        // Converts RSQL query string into a JPA Specification
+        // Allows dynamic filtering of trades based on parsed RSQL criteria
+        Specification<Trade> spec = RSQLJPASupport.toSpecification(query);
+        
+        return tradeRepository.findAll(spec, pageable);
     }
 
     @Transactional
