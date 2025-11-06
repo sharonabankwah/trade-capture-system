@@ -22,20 +22,24 @@ public class TradeSpecificationBuilder {
 
         if (counterpartyName != null && !counterpartyName.isBlank()) {
             spec = spec.and((root, query, cb) ->
-                    cb.like(cb.lower(root.get("counterpartyName")), "%" + counterpartyName.toLowerCase() + "%"));
+                    cb.like(cb.lower(root.get("counterparty").get("name")), 
+                    "%" + counterpartyName.toLowerCase() + "%"));
         }
 
         if (bookName != null && !bookName.isBlank()) {
             spec = spec.and((root, query, cb) ->
-                    cb.like(cb.lower(root.get("bookName")), "%" + bookName.toLowerCase() + "%"));
+                    cb.like(cb.lower(root.get("book").get("bookName")), 
+                    "%" + bookName.toLowerCase() + "%"));
         }
 
         if (traderUserId != null) {
-            spec = spec.and((root, query, cb) -> cb.equal(root.get("traderUserId"), traderUserId));
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("traderUser").get("id"),
+            traderUserId));
         }
 
         if (tradeStatus != null && !tradeStatus.isBlank()) {
-            spec = spec.and((root, query, cb) -> cb.equal(root.get("tradeStatus"), tradeStatus));
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("tradeStatus").get("tradeStatus"),
+            tradeStatus));
         }
 
         if (tradeDate != null) {
