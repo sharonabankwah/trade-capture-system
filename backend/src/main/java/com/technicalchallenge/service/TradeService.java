@@ -6,6 +6,7 @@ import com.technicalchallenge.model.*;
 import com.technicalchallenge.repository.*;
 import com.technicalchallenge.specification.TradeSpecificationBuilder;
 
+import io.github.perplexhub.rsql.RSQLJPASupport;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
@@ -170,6 +171,7 @@ public class TradeService {
         String sortBy, 
         String sortDir) {
 
+        // Sorts based on ascending or descending
         Sort sort = sortDir.equalsIgnoreCase("desc")
         ? Sort.by(sortBy).descending()
         : Sort.by(sortBy).ascending();
@@ -183,6 +185,23 @@ public class TradeService {
 
         return tradeRepository.findAll(spec, pageable);
 
+    }
+
+    public Page<Trade> getTradesByRsql(String query, int pageNumber, int pageSize, String sortBy, String sortDir) {
+        
+        // Sorts based on ascending or descending
+        Sort sort = sortDir.equalsIgnoreCase("desc") 
+        ? Sort.by(sortBy).descending() 
+        : Sort.by(sortBy).ascending();
+
+         // Builds pagination object with sorting
+        Pageable pageable = PageRequest.of(pageNumber, pageSize, sort);
+
+        // Converts RSQL query string into a JPA Specification
+        // Allows dynamic filtering of trades based on parsed RSQL criteria
+        Specification<Trade> spec = RSQLJPASupport.toSpecification(query);
+        
+        return tradeRepository.findAll(spec, pageable);
     }
 
     @Transactional
