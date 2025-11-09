@@ -14,20 +14,29 @@ public class ValidationResult {
       this.errors = new ArrayList<>();
   }
 
+  // Checks if the validation passed or failed
   public boolean isValid() {
       return valid;
   }
 
+  // Returns all error messages
   public List<String> getErrors() {
       return errors;
   }
 
+  // Checks if any validation errors exist
+  public boolean hasErrors() {
+    return !errors.isEmpty();
+  }
+
+  // Adds an error message
   public void addError(String errorMessage) {
       this.errors.add(errorMessage);
       // Once an error has been added, mark invalid
       this.valid = false; 
   }
 
+  // Stores all error messages
   public void addErrors(List<String> errorMessages) {
       if (errorMessages != null && !errorMessages.isEmpty()) {
           this.errors.addAll(errorMessages);
