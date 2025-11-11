@@ -4,8 +4,8 @@ import com.technicalchallenge.dto.TradeDTO;
 import com.technicalchallenge.mapper.TradeMapper;
 import com.technicalchallenge.model.Trade;
 import com.technicalchallenge.service.TradeService;
-import com.technicalchallenge.service.TradeValidationService;
-import com.technicalchallenge.validation.ValidationResult;
+import com.technicalchallenge.validation.TradeValidationService;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -44,8 +44,6 @@ public class TradeController {
     private TradeService tradeService;
     @Autowired
     private TradeMapper tradeMapper;
-    @Autowired
-    private TradeValidationService tradeValidationService;
 
     @GetMapping
     @Operation(summary = "Get all trades",
@@ -207,22 +205,11 @@ public class TradeController {
             @Valid @RequestBody TradeDTO tradeDTO) {
         logger.info("Creating new trade: {}", tradeDTO);
         try {
-            // Validates business rules first
-            ValidationResult validationResult = tradeValidationService.validateTradeBusinessRules(tradeDTO);
-
-            // Returns all errors to user
-            if (validationResult.hasErrors()) {
-                return ResponseEntity.badRequest().body(validationResult.getErrors());
-            }
-
-            // Continues if there are no validation errors
             Trade trade = tradeMapper.toEntity(tradeDTO);
             tradeService.populateReferenceDataByName(trade, tradeDTO);
             Trade savedTrade = tradeService.saveTrade(trade, tradeDTO);
             TradeDTO responseDTO = tradeMapper.toDto(savedTrade);
-
-            // Added return status 200 OK for successful creation
-            return ResponseEntity.ok(responseDTO);
+            return ResponseEntity.status(HttpStatus.OK).body(responseDTO);
 
         } catch (Exception e) {
             logger.error("Error creating trade: {}", e.getMessage(), e);
@@ -248,17 +235,8 @@ public class TradeController {
             @Valid @RequestBody TradeDTO tradeDTO) {
         logger.info("Updating trade with id: {}", id);
         try {
-            // Validates business rules first
-            ValidationResult validationResult = tradeValidationService.validateTradeBusinessRules(tradeDTO);
-
-            // Returns all errors to user
-            if (validationResult.hasErrors()) {
-                return ResponseEntity.badRequest().body(validationResult.getErrors());
-            }
-
             if (tradeDTO.getTradeId() == null || !tradeDTO.getTradeId().equals(id)) {
                 return ResponseEntity.badRequest().body("Trade ID in path must match Trade ID in request body");
-
             }
 
             tradeDTO.setTradeId(id); // Ensure the ID matches

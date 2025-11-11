@@ -5,7 +5,6 @@ import com.technicalchallenge.dto.TradeLegDTO;
 import com.technicalchallenge.model.*;
 import com.technicalchallenge.repository.*;
 import com.technicalchallenge.specification.TradeSpecificationBuilder;
-import com.technicalchallenge.validation.ValidationResult;
 
 import io.github.perplexhub.rsql.RSQLJPASupport;
 import jakarta.persistence.EntityManager;
@@ -246,6 +245,7 @@ public class TradeService {
         logger.info("Successfully created trade with ID: {}", savedTrade.getTradeId());
         return savedTrade;
     }
+        
 
     // NEW METHOD: For controller compatibility
     @Transactional

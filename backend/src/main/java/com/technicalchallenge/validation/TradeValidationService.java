@@ -1,4 +1,4 @@
-package com.technicalchallenge.service;
+package com.technicalchallenge.validation;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -14,7 +14,6 @@ import com.technicalchallenge.model.ApplicationUser;
 import com.technicalchallenge.repository.ApplicationUserRepository;
 import com.technicalchallenge.repository.BookRepository;
 import com.technicalchallenge.repository.CounterpartyRepository;
-import com.technicalchallenge.validation.ValidationResult;
 
 @Service
 public class TradeValidationService {
@@ -23,10 +22,7 @@ public class TradeValidationService {
     private final CounterpartyRepository counterpartyRepository;
     private final ApplicationUserRepository applicationUserRepository;
 
-    public TradeValidationService(
-        BookRepository bookRepository,
-        CounterpartyRepository counterpartyRepository,
-        ApplicationUserRepository applicationUserRepository) {
+    public TradeValidationService(BookRepository bookRepository, CounterpartyRepository counterpartyRepository, ApplicationUserRepository applicationUserRepository) {
         this.bookRepository = bookRepository;
         this.counterpartyRepository = counterpartyRepository;
         this.applicationUserRepository = applicationUserRepository;
@@ -36,6 +32,7 @@ public class TradeValidationService {
      * Validate business rules for a trade
      */
     public ValidationResult validateTradeBusinessRules(TradeDTO tradeDTO) {
+        
         ValidationResult result = new ValidationResult();
 
         validateTradeDates(tradeDTO, result);
