@@ -1,11 +1,11 @@
-# Trade Service Tests Documentation
+## Trade Service Tests Documentation
 
 ## Overview
 This document summarises the key changes and fixes made to the Trade Service unit tests. Each section outlines the problem, root cause, solution, and impact on the tests.
 
 ---
 
-## 1. `testCreateTrade_Success` Fix
+### 1. `testCreateTrade_Success` Fix
 
 **Commit:** `fix(test): made testCreateTrade_Success pass by mocking required dependencies`
 
@@ -31,7 +31,7 @@ The test now passes, exercising `createTrade` fully with proper reference data a
 
 ---
 
-## 2. `testCreateTrade_InvalidDates_ShouldFail` Fix
+### 2. `testCreateTrade_InvalidDates_ShouldFail` Fix
 
 **Commit:** `fix(test): correct expected error message in testCreateTrade_InvalidDates_ShouldFail`
 
@@ -43,14 +43,14 @@ The test originally contained a placeholder message ("Wrong error message"). The
 `"Start date cannot be before trade date"` when the start date is before the trade date.
 
 ### Solution
-Updated the test assertion to expect the correct message, aligning it with the service’s behavior.
+Updated the test assertion to expect the correct message, aligning it with the service’s behaviour.
 
 ### Impact
 The test now correctly verifies trade date validation logic and passes successfully.
 
 ---
 
-## 3. `testAmendTrade_Success` Fix
+### 3. `testAmendTrade_Success` Fix
 
 **Commit:** `fix(test): fixed NullPointerException in testAmendTrade_Success`
 
@@ -69,7 +69,7 @@ The test now passes, confirming that trade amendments correctly save and handle 
 
 ---
 
-## 4. `testCashflowGeneration_MonthlySchedule` Implementation
+### 4. `testCashflowGeneration_MonthlySchedule` Implementation
 
 **Commit:** `fix(test): implement testCashflowGeneration_MonthlySchedule to test for monthly cashflow generation`
 
@@ -94,7 +94,7 @@ The original test was invalid due to logical errors, missing TradeLeg setup, and
 
 ---
 
-## 5. Schedule Setup for Monthly Cashflow Test
+### 5. Schedule Setup for Monthly Cashflow Test
 
 **Commit:** `test(update): included Schedule setup for monthly cashflow generation test`
 
