@@ -1,5 +1,13 @@
 # Trading Application Technical Challenge
 
+## **Submission Overview**
+
+This submission implements the required system enhancements for the Trade Capture platform, including advanced trade search capabilities, business rule validations, and user privilege enforcement. The project also includes comprehensive testing improvements and detailed documentation outlining design decisions, encountered challenges, and future enhancement opportunities.
+
+During development, several environment-related issues were encountered when running the application in GitHub Codespaces, particularly around frontend–backend communication, CORS configuration, and environment variable handling. These were systematically resolved through configuration refinements in both the backend and frontend.
+
+For a detailed record of all enhancement implementations, test resolutions, and supporting explanations, please refer to the documentation provided in the /docs directory.
+
 ## Welcome to the Challenge!
 
 This technical challenge is designed to assess your software development skills across multiple domains including backend development, frontend integration, debugging, full-stack feature implementation, and cloud architecture understanding.
@@ -10,9 +18,9 @@ This technical challenge is designed to assess your software development skills 
 
 The challenge consists of **7 progressive steps**, each testing different aspects of software development:
 
-1. **Project Setup** - Environment configuration and basic setup
-2. **Test Case Fixes** - Debugging and fixing failing tests
-3. **Missing Functionality** - Implementing advanced search, validation, and dashboard features
+1. ✅ **Project Setup** - Environment configuration and basic setup
+2. ✅ **Test Case Fixes** - Debugging and fixing failing tests
+3. ✅ **Missing Functionality** - Implementing advanced search, validation, and dashboard features
 4. **Bug Investigation** - Root cause analysis and bug fixing
 5. **Full-Stack Feature** - Settlement instructions implementation
 6. **Containerization** - Docker and DevOps (OPTIONAL)
@@ -22,7 +30,7 @@ The challenge consists of **7 progressive steps**, each testing different aspect
 
 ---
 
-## Step 1: Project Setup (REQUIRED)
+## Step 1: Project Setup (COMPLETED)
 
 ### Objective
 Set up the trading application in your local environment and ensure both backend and frontend are running correctly.
@@ -51,7 +59,7 @@ Set up the trading application in your local environment and ensure both backend
 
 ---
 
-## Step 2: Fix Failing Test Cases (REQUIRED)
+## Step 2: Fix Failing Test Cases (COMPLETED)
 
 ### Objective
 Identify and fix failing test cases in the backend application while documenting your debugging process and understanding of the fixes.
@@ -87,7 +95,7 @@ For each test fix, document:
 
 ---
 
-## Step 3: Implement Missing Functionality (REQUIRED)
+## Step 3: Implement Missing Functionality (PARTIALLY COMPLETED)
 
 ### Business Enhancement Request
 
@@ -116,7 +124,7 @@ The trading desk has identified critical gaps in the current trading application
 
 You must implement **ALL THREE** of the following critical enhancements:
 
-### **Enhancement 1: Advanced Trade Search System**
+### **Enhancement 1: Advanced Trade Search System** (COMPLETED)
 
 **Business Requirement**: "As a trader, I need to quickly find trades using multiple search criteria so that I can efficiently manage my trading portfolio."
 
@@ -147,7 +155,7 @@ You must implement **ALL THREE** of the following critical enhancements:
 /api/trades/rsql?query=tradeDate=ge=2025-01-01;tradeDate=le=2025-12-31
 ```
 
-### **Enhancement 2: Comprehensive Trade Validation Engine**
+### **Enhancement 2: Comprehensive Trade Validation Engine** (COMPLETED)
 
 **Business Requirement**: "As a risk manager, I need comprehensive validation of all trade data to prevent invalid trades from entering our systems and causing operational issues."
 
@@ -183,7 +191,7 @@ public ValidationResult validateTradeLegConsistency(List<TradeLegDTO> legs)
    - User, book, and counterparty must be active in the system
    - All reference data must exist and be valid
 
-### **Enhancement 3: Trader Dashboard and Blotter System**
+### **Enhancement 3: Trader Dashboard and Blotter System** (NOT COMPLETED)
 
 **Business Requirement**: "As a trader, I need personalized dashboard views and summary statistics so that I can monitor my positions and make informed trading decisions."
 
@@ -247,7 +255,7 @@ public class DailySummaryDTO {
 - ✅ Search functionality supports real trading workflows
 ---
 
-## Step 4: Bug Investigation and Fix (REQUIRED)
+## Step 4: Bug Investigation and Fix (NOT COMPLETED)
 
 ### Objective
 Investigate and fix a critical bug in the cashflow calculation logic that's affecting production trading operations.
@@ -295,7 +303,7 @@ Prove your fix works:
 
 ---
 
-## Step 5: Full-Stack Feature Implementation (REQUIRED)
+## Step 5: Full-Stack Feature Implementation (NOT COMPLETED)
 
 ### Business Feature Request
 
@@ -499,7 +507,7 @@ When you complete this feature, you should have:
 - **Regulatory Compliance**: Complete audit trail for settlement instruction management
 ---
 
-## Step 6: Application Containerization (OPTIONAL - BONUS)
+## Step 6: Application Containerization (NOT COMPLETED)
 
 ### Overview
 **Congratulations on reaching Step 6!** This is an optional step showcasing DevOps capabilities.
@@ -560,7 +568,7 @@ If you cannot complete the full implementation, demonstrate your understanding b
 
 ---
 
-## Step 7: Azure Cloud Architecture Design (OPTIONAL - MAGNIFICENT ACHIEVEMENT)
+## Step 7: Azure Cloud Architecture Design (NOT COMPLETED)
 
 ### Overview
 **Reaching Step 7 represents a magnificent achievement!** This step focuses entirely on architectural design and documentation (no actual Azure deployment required).
