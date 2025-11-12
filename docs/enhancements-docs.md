@@ -76,3 +76,32 @@
 - Null safety and careful use of DTOs vs entities is critical in complex business applications.
 - Role-based access control can be cleanly implemented with switch/case logic and proper case-insensitive matching.
 - Writing detailed **unit tests for each validator** ensures robustness without affecting the main trade workflow.
+
+### **Current Status – Trade Creation Validation Issue (Amendment)**
+
+**Overview:**
+After implementing the user privilege validation logic, all trade creation attempts are failing due to privilege checks, regardless of the user. This includes TRADER_SALES, MIDDLE_OFFICE, SUPPORT, and other roles.
+
+**Observed Behaviour:**
+
+- Every attempt to create a trade triggers a UserPrivilegeValidationException.
+- Logs confirm the validation check is executing correctly but always evaluates to false for ownership or permissions.
+- Payloads and test data changes (e.g., modifying traderUserId, traderUserName, inputterUserName) do not resolve the failure.
+
+**Likely Cause:**
+
+- The underlying repository/service that the validator uses (userPrivilegeRepository or equivalent) seems to expect a domain-specific ID or format that is not provided by the current payload.
+- This indicates a known bug in the privilege validation integration rather than an issue with individual users or the validator logic itself.
+
+**Impact:**
+
+- Trade creation functionality is blocked for all users.
+- Existing roles (e.g., MO, SUPPORT) cannot create trades, even if the validator logic theoretically allows it.
+
+**Next Steps:**
+
+- Investigate and fix the repository/service mapping so that privilege checks correctly reflect user permissions.
+
+**Note:**
+
+- This issue surfaced immediately after adding the new validation logic. No other changes to the system appear to be contributing.
