@@ -5,6 +5,11 @@ import com.technicalchallenge.dto.TradeLegDTO;
 import com.technicalchallenge.model.*;
 import com.technicalchallenge.repository.*;
 import com.technicalchallenge.specification.TradeSpecificationBuilder;
+import com.technicalchallenge.validation.ValidationResult;
+import com.technicalchallenge.validation.TradeValidator;
+import com.technicalchallenge.validation.UserPrivilegeValidator;
+import com.technicalchallenge.exception.TradeValidationException;
+import com.technicalchallenge.exception.UserPrivilegeValidationException;
 
 import io.github.perplexhub.rsql.RSQLJPASupport;
 import jakarta.persistence.EntityManager;
@@ -76,6 +81,11 @@ public class TradeService {
     private EntityManager entityManager;
     @Autowired
     private TradeSpecificationBuilder tradeSpecificationBuilder;
+    @Autowired
+    private TradeValidator tradeValidator;
+    @Autowired 
+    private UserPrivilegeValidator userPrivilegeValidator;
+    
 
     public List<Trade> getAllTrades() {
         logger.info("Retrieving all trades");
@@ -87,18 +97,17 @@ public class TradeService {
         return tradeRepository.findByTradeIdAndActiveTrue(tradeId);
     }
 
-    public List<Trade> getTradeByMultiCriteriaSearch(
     /**
-    * Searches for trades using multiple optional filters such as counterparty, book, trader, status, 
-    * and trade dates.
-    * @param counterpartyName counterparty to filter by
-    * @param bookName book name to filter by
-    * @param loginId trader's login ID to filter by
-    * @param tradeStatus trade status to filter by
-    * @param tradeStartDate filter trades on or after this date
-    * @param tradeMaturityDate filter trades maturing on or before this date
+    * Searches for trades based on multiple optional fitlers
+    * @param counterpartyName counterparty to filter by (optional)
+    * @param bookName book name to filter by (optional)
+    * @param loginId trader's login ID to filter by (optional)
+    * @param tradeStatus trade status to filter by (optional)
+    * @param tradeStartDate filter trades on or after this date (optional)
+    * @param tradeMaturityDate filter trades maturing on or before this date (optional)
     * @return list of matching trades
     */
+    public List<Trade> getTradeByMultiCriteriaSearch(
         String counterpartyName,
         String bookName, 
         Long traderUserId, 
@@ -108,56 +117,56 @@ public class TradeService {
         LocalDate tradeMaturityDate) {
 
         CriteriaBuilder cb = entityManager.getCriteriaBuilder(); 
-
         CriteriaQuery<Trade> cq = cb.createQuery(Trade.class);
-
         Root<Trade> tradeRoot = cq.from(Trade.class);
 
         List<Predicate> predicates = new ArrayList<>();
 
+        // Builds query conditions dynamically based on provided filters
         if (counterpartyName != null) {
-            predicates.add(cb.equal(tradeRoot.get("counterparty").get("name"),
-                counterpartyName
-            ));
+            predicates.add(cb.equal(tradeRoot.get("counterparty").get("name"), counterpartyName));
         }
         if (bookName != null) {
-            predicates.add(cb.equal(tradeRoot.get("book").get("bookName"), 
-                bookName
-            ));
+            predicates.add(cb.equal(tradeRoot.get("book").get("bookName"), bookName));
         }
         if (traderUserId != null) {
-            predicates.add(cb.equal(tradeRoot.get("traderUser").get("id"), 
-                traderUserId
-            ));
+            predicates.add(cb.equal(tradeRoot.get("traderUser").get("id"), traderUserId));
         }
         if (tradeStatus != null) {
-            predicates.add(cb.equal(tradeRoot.get("tradeStatus").get("tradeStatus"),
-                 tradeStatus
-            ));
+            predicates.add(cb.equal(tradeRoot.get("tradeStatus").get("tradeStatus"), tradeStatus));
         }
+
+        // Handles date range filtering
         if ((tradeStartDate != null) && (tradeMaturityDate != null)) {
-            predicates.add(cb.between(tradeRoot.get("tradeDate"),
-            tradeStartDate, tradeMaturityDate
-            ));
-        }
-        else if (tradeStartDate != null) {
-            predicates.add(cb.greaterThanOrEqualTo(tradeRoot.get("tradeStartDate"), 
-                tradeStartDate
-            ));
-        }
-        else if (tradeMaturityDate != null) {
-            predicates.add(cb.lessThanOrEqualTo(tradeRoot.get("tradeMaturityDate"),
-                tradeMaturityDate
-            ));
+            predicates.add(cb.between(tradeRoot.get("tradeDate"), tradeStartDate, tradeMaturityDate));
+        } else if (tradeStartDate != null) {
+            predicates.add(cb.greaterThanOrEqualTo(tradeRoot.get("tradeStartDate"), tradeStartDate));
+        } else if (tradeMaturityDate != null) {
+            predicates.add(cb.lessThanOrEqualTo(tradeRoot.get("tradeMaturityDate"), tradeMaturityDate));
         }
         
         cq.where(cb.and(predicates.toArray(new Predicate[0])));
-        
         TypedQuery<Trade> query = entityManager.createQuery(cq);
 
         return query.getResultList();
     }
 
+    /**
+     * Retrieves a paginated and sorted list of trades using multiple filters
+     * This uses the TradeSpecificationBuilder for dynamic query construction
+     * @param counterpartyName    Counterparty name filter (optional)
+     * @param bookName            Book name filter (optional)
+     * @param traderUserId        Trader ID filter (optional)
+     * @param tradeStatus         Trade status filter (optional)
+     * @param tradeDate           Trade date filter (optional)
+     * @param tradeStartDate      Start date filter (optional)
+     * @param tradeMaturityDate   Maturity date filter (optional)
+     * @param pageNumber          Current page number (0-based)
+     * @param pageSize            Number of records per page
+     * @param sortBy              Field name to sort by
+     * @param sortDir             Sort direction ("asc" or "desc")
+     * @return                    A paginated list of trades
+     */
     public Page<Trade> getTradesWithFiltersAndPagination(
         String counterpartyName,
         String bookName, 
@@ -178,15 +187,24 @@ public class TradeService {
 
         Pageable pageable = PageRequest.of(pageNumber, pageSize, sort);
 
+        // Build dynamic filtering specification
         Specification<Trade> spec = tradeSpecificationBuilder.buildTradeSpecification(
             counterpartyName, bookName, traderUserId, tradeStatus,
             tradeDate, tradeStartDate, tradeMaturityDate
         );
 
         return tradeRepository.findAll(spec, pageable);
-
     }
 
+    /**
+     * Retrieves trades using an RSQL query string for dynamic filtering and pagination
+     * @param query      RSQL-formatted query string
+     * @param pageNumber Current page number (0-based)
+     * @param pageSize   Number of records per page
+     * @param sortBy     Field name to sort by
+     * @param sortDir    Sort direction ("asc" or "desc")
+     * @return           A paginated list of trades matching the RSQL filters
+     */
     public Page<Trade> getTradesByRsql(String query, int pageNumber, int pageSize, String sortBy, String sortDir) {
         
         // Sorts based on ascending or descending
@@ -198,7 +216,6 @@ public class TradeService {
         Pageable pageable = PageRequest.of(pageNumber, pageSize, sort);
 
         // Converts RSQL query string into a JPA Specification
-        // Allows dynamic filtering of trades based on parsed RSQL criteria
         Specification<Trade> spec = RSQLJPASupport.toSpecification(query);
         
         return tradeRepository.findAll(spec, pageable);
@@ -216,7 +233,7 @@ public class TradeService {
             logger.info("Generated trade ID: {}", generatedTradeId);
         }
 
-        // Validate business rules
+        // Validate trade-level business rules
         validateTradeCreation(tradeDTO);
 
         // Create trade entity
@@ -251,6 +268,19 @@ public class TradeService {
     @Transactional
     public Trade saveTrade(Trade trade, TradeDTO tradeDTO) {
         logger.info("Saving trade with ID: {}", trade.getTradeId());
+
+        // Validate privileges
+        boolean hasSufficientPrivileges = userPrivilegeValidator.validateUserPrivileges(
+                    tradeDTO.getInputterUserName(), "CREATE", tradeDTO);
+                if (!hasSufficientPrivileges) {
+                    throw new UserPrivilegeValidationException("This account lacks the required privileges for this operation");
+                }
+
+        // Validate trade business rules
+        ValidationResult validationResult = tradeValidator.validateTradeBusinessRules(tradeDTO);
+        if (!validationResult.isValid()) {
+            throw new TradeValidationException("Invalid trade: ", validationResult.getErrors());
+        }
 
         // If this is an existing trade (has ID), handle as amendment
         if (trade.getId() != null) {
