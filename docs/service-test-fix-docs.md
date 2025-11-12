@@ -5,7 +5,7 @@ This document summarises the key changes and fixes made to the Trade Service uni
 
 ---
 
-### `fix(test): made testCreateTrade_Success pass by mocking required dependencies`
+### fix(test): made testCreateTrade_Success pass by mocking required dependencies
 
 **Problem:**
 The `testCreateTrade_Success` was failing due to multiple `NullPointerExceptions`. The service method `createTrade` depends on reference data (Book, Counterparty, TradeStatus) and saved TradeLegs, which were not properly mocked in the test.
@@ -29,7 +29,7 @@ The test now passes, exercising `createTrade` fully with proper reference data a
 
 ---
 
-### `fix(test): correct expected error message in testCreateTrade_InvalidDates_ShouldFail`
+### fix(test): correct expected error message in testCreateTrade_InvalidDates_ShouldFail
 
 **Problem:**
 The test was failing because the expected exception message did not match the actual message thrown by the `TradeService` validation logic.
@@ -46,7 +46,7 @@ The test now correctly verifies trade date validation logic and passes successfu
 
 ---
 
-### `fix(test): fixed NullPointerException in testAmendTrade_Success`
+### fix(test): fixed NullPointerException in testAmendTrade_Success
 
 **Problem:**
 `testAmendTrade_Success` failed due to a `NullPointerException` when `generateCashflows()` was called. The method attempted to access `leg.getLegId()`, which returned `null`.
@@ -63,7 +63,7 @@ The test now passes, confirming that trade amendments correctly save and handle 
 
 ---
 
-### `fix(test): implement testCashflowGeneration_MonthlySchedule to test for monthly cashflow generation`
+### fix(test): implement testCashflowGeneration_MonthlySchedule to test for monthly cashflow generation
 
 **Problem:**
 The original test was invalid due to logical errors, missing TradeLeg setup, and unmocked repositories.
@@ -86,7 +86,7 @@ The original test was invalid due to logical errors, missing TradeLeg setup, and
 
 ---
 
-### `test(update): included Schedule setup for monthly cashflow generation test`
+### test(update): included Schedule setup for monthly cashflow generation test
 
 **Details:**
 - Added a `Schedule` object with a 1M time frame.  
