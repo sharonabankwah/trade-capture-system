@@ -1,5 +1,12 @@
 ### Codespaces Setup and Configuration Fixes
 
+### Overview
+
+This document summarises the fixes implemented to enable seamless frontend–backend communication in GitHub Codespaces.
+It covers key issues such as CORS restrictions, environment variable setup, and Swagger configuration, ensuring the application runs reliably in the Codespaces environment.
+
+---
+
 ### **fix(WebConfig): Allow Codespaces frontend to access backend**
 
 **Problem:** The frontend running in Codespaces could not communicate with the backend due to CORS errors.
