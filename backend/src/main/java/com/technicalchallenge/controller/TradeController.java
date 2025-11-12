@@ -4,7 +4,7 @@ import com.technicalchallenge.dto.TradeDTO;
 import com.technicalchallenge.mapper.TradeMapper;
 import com.technicalchallenge.model.Trade;
 import com.technicalchallenge.service.TradeService;
-import com.technicalchallenge.validation.TradeValidationService;
+import com.technicalchallenge.validation.TradeValidator;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
