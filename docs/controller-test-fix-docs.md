@@ -1,5 +1,10 @@
 ### Trade Controller Tests Documentation
 
+### Overview
+This document summarises the key changes and fixes made to the Trade Controller unit tests. Each section outlines the problem, root cause, solution, and impact on the tests.
+
+---
+
 ### fix(test): adjust testCreateTrade to return 200 instead of 201
 
 **Problem:**  
