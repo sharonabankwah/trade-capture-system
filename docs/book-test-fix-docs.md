@@ -1,5 +1,10 @@
 ### Book Service Tests Documentation
 
+### Overview
+This document summarises the key changes and fixes made to the Book Service unit tests. Each section outlines the problem, root cause, solution, and impact on the tests.
+
+---
+
 ### fix(test): updated testFindBookById() to mock BookMapper and map Book to BookDTO
 
 **Problem:**  
