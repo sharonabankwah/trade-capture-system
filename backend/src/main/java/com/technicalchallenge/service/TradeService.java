@@ -245,6 +245,7 @@ public class TradeService {
         logger.info("Successfully created trade with ID: {}", savedTrade.getTradeId());
         return savedTrade;
     }
+        
 
     // NEW METHOD: For controller compatibility
     @Transactional

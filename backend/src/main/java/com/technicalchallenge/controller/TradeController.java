@@ -4,6 +4,8 @@ import com.technicalchallenge.dto.TradeDTO;
 import com.technicalchallenge.mapper.TradeMapper;
 import com.technicalchallenge.model.Trade;
 import com.technicalchallenge.service.TradeService;
+import com.technicalchallenge.validation.TradeValidationService;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -207,8 +209,8 @@ public class TradeController {
             tradeService.populateReferenceDataByName(trade, tradeDTO);
             Trade savedTrade = tradeService.saveTrade(trade, tradeDTO);
             TradeDTO responseDTO = tradeMapper.toDto(savedTrade);
-            // Added return status 200 OK for successful creation
-            return ResponseEntity.ok(responseDTO);
+            return ResponseEntity.status(HttpStatus.OK).body(responseDTO);
+
         } catch (Exception e) {
             logger.error("Error creating trade: {}", e.getMessage(), e);
             return ResponseEntity.badRequest().body("Error creating trade: " + e.getMessage());
@@ -233,14 +235,16 @@ public class TradeController {
             @Valid @RequestBody TradeDTO tradeDTO) {
         logger.info("Updating trade with id: {}", id);
         try {
-            if (!tradeDTO.getTradeId().equals(id)) {
+            if (tradeDTO.getTradeId() == null || !tradeDTO.getTradeId().equals(id)) {
                 return ResponseEntity.badRequest().body("Trade ID in path must match Trade ID in request body");
-            } else {
+            }
+
             tradeDTO.setTradeId(id); // Ensure the ID matches
             Trade amendedTrade = tradeService.amendTrade(id, tradeDTO);
             TradeDTO responseDTO = tradeMapper.toDto(amendedTrade);
+
             return ResponseEntity.ok(responseDTO);
-            }
+
         } catch (Exception e) {
             logger.error("Error updating trade: {}", e.getMessage(), e);
             return ResponseEntity.badRequest().body("Error updating trade: " + e.getMessage());
